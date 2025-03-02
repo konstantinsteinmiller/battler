@@ -3,6 +3,7 @@ import state from '@/states/GlobalState.ts'
 import { convertToReadableSize } from '@/utils/function.ts'
 import { ref, type Ref } from 'vue'
 
+const currentOverallSize = 28060383
 let singleton: any = null
 const FileLoader = () => {
   if (singleton !== null) return singleton
@@ -13,7 +14,7 @@ const FileLoader = () => {
   let fileProgressMap: Record<string, { loaded: number; total: number }> = {}
 
   // Total bytes across all files (set when progress events arrive)
-  let overallTotal = +localStorage[ZORA_TOTAL_LOAD_SIZE_NAME] || 0
+  let overallTotal = +localStorage[ZORA_TOTAL_LOAD_SIZE_NAME] || currentOverallSize || 0
   let totalLoaded = 0
   const isKnowingTotal = overallTotal > 0
 

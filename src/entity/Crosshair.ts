@@ -108,7 +108,12 @@ export default () => {
     crosshairDots.visible = false
     crosshairStar.visible = false
     state.player.currentSpell.charge = 0
-    state.player.destroyChargeIndicatorVFX(chargeIndicatorNebulaSystem, chargeIndicatorEventUuid, state.player)
+    state.player.destroyChargeIndicatorVFX(
+      chargeIndicatorNebulaSystem,
+      vfxRenderer,
+      chargeIndicatorEventUuid,
+      state.player
+    )
     chargeIndicatorNebulaSystem = null
   })
 
@@ -121,6 +126,7 @@ export default () => {
     chargeStartTime = Date.now()
   })
   let chargeIndicatorNebulaSystem: any = null
+  let vfxRenderer: any = null
   let chargeIndicatorEventUuid: string = ''
   let firstCharge = true
 
@@ -136,6 +142,7 @@ export default () => {
       const chargeVFX = await entity.createChargeIndicator(entity)
       chargeIndicatorNebulaSystem = chargeVFX.nebulaSystem
       chargeIndicatorEventUuid = chargeVFX.eventUuid
+      vfxRenderer = chargeVFX.vfxRenderer
     }
     if (chargeIndicatorNebulaSystem) {
       entity.updateChargeIndicator(entity, rotationSpeed, chargeIndicatorNebulaSystem)
@@ -178,7 +185,7 @@ export default () => {
       crosshairDots.visible = true
     } else {
       /* spell overload -> forced release of the charged shot and receive damage */
-      console.log('rotationSpeed: ', rotationSpeed)
+      // console.log('rotationSpeed: ', rotationSpeed)
       fireRaycaster(rotationSpeed, state.player, state.enemy)
       canFire = false
       forcedSpellRelease = true
@@ -187,7 +194,12 @@ export default () => {
       state.controls.attack = false
       crosshairDots.visible = false
       crosshairStar.visible = false
-      state.player.destroyChargeIndicatorVFX(chargeIndicatorNebulaSystem, chargeIndicatorEventUuid, state.player)
+      state.player.destroyChargeIndicatorVFX(
+        chargeIndicatorNebulaSystem,
+        vfxRenderer,
+        chargeIndicatorEventUuid,
+        state.player
+      )
       chargeIndicatorNebulaSystem = null
     }
   })

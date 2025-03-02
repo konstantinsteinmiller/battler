@@ -105,12 +105,12 @@
   - [x] scale damage with charge level
   - [x] show vfx as indicator for charge level of enemy and player
   - [ ] add strafing
-  - [ ] fix vfx cleanup or GPURenderer reuse
+  - [x] fix vfx cleanup or GPURenderer reuse
 - [x] Refactor InputController to decouple actions from peripheral inputs
 - [x] skybox
 - [x] First person camera with Keyboard and Mouse
 - [x] Third person camera with Keyboard and Mouse
-- [ ] basic three game engine 
+- [x] basic three game engine 
   - [x] Physics
   - [x] Renderer
   - [x] Light

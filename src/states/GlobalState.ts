@@ -110,6 +110,7 @@ const globalState = () => {
   state.isBattleOngoing = false
   state.isEngineInitialized = false
   state.isBattleInitialized = false
+  state.vfxList = []
 
   return state
 }

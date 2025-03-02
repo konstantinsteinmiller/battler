@@ -1,11 +1,12 @@
 import * as THREE from 'three'
 import { Vector3 } from 'three'
-import System, { SpriteRenderer, GPURenderer, Force } from 'three-nebula'
+import System, { GPURenderer } from 'three-nebula'
 import state from '@/states/GlobalState'
 
 import ShotVFX from '@/vfx/shot.json'
 import DeathStarVFX from '@/vfx/death-star.json'
 import ChargeVFX from '@/vfx/charge.json'
+import { v4 } from 'uuid'
 
 const vfxMap: { [key: string]: any } = {
   shot: ShotVFX,
@@ -13,12 +14,23 @@ const vfxMap: { [key: string]: any } = {
   charge: ChargeVFX,
 }
 
+export const destroyRenderer = (renderer: GPURenderer) => {
+  if (renderer) {
+    renderer?.forceContextLoss?.()
+    renderer.destroy()
+    renderer?.dispose?.()
+
+    state.vfxList = state.vfxList.filter((name: string) => name !== renderer.vfxName)
+    // console.log(JSON.stringify(state.vfxList, undefined, 2))
+  }
+}
+
 export const createVFX = async (
   position: Vector3,
   vfxName: string,
   removeOnDeath: boolean = true,
   onFinished?: () => void
-): Promise<{ eventUuid: string; nebulaSystem: any }> => {
+): Promise<{ eventUuid: string; nebulaSystem: any; vfxRenderer: any }> => {
   const vfx = vfxMap[vfxName]
   if (!vfx) {
     console.error(`VFX not found: ${vfxName}`)
@@ -27,8 +39,11 @@ export const createVFX = async (
 
   const system = await System.fromJSONAsync(vfx.particleSystemState, THREE)
   // const nebulaRenderer = new SpriteRenderer(state.scene, THREE)
-  const nebulaRenderer = new GPURenderer(state.scene, THREE)
-  const nebulaSystem = system.addRenderer(nebulaRenderer)
+  const vfxRenderer = new GPURenderer(state.scene, THREE)
+  vfxRenderer.vfxName = `${vfxName}_${v4()}`
+  state.vfxList.push(vfxRenderer.vfxName)
+
+  const nebulaSystem = system.addRenderer(vfxRenderer)
   nebulaSystem.emitters.forEach((emitter: any) => {
     emitter.position.copy(position as Vector3)
   })
@@ -42,11 +57,13 @@ export const createVFX = async (
         if (hasRemovedSystem) return
         onFinished?.()
         state.removeEvent(`renderer.update`, eventUuid)
+        nebulaSystem.destroy()
+        destroyRenderer(vfxRenderer)
         hasRemovedSystem = true
       }, 1000)
     }
   })
-  return Promise.resolve({ eventUuid, nebulaSystem })
+  return Promise.resolve({ eventUuid, nebulaSystem, vfxRenderer })
 }
 
 export const createShotVFX = async (
@@ -60,8 +77,10 @@ export const createShotVFX = async (
 
   const system = await System.fromJSONAsync(ShotVFX.particleSystemState, THREE)
   // const nebulaRenderer = new SpriteRenderer(state.scene, THREE)
-  const nebulaRenderer = new GPURenderer(state.scene, THREE)
-  const nebulaSystem = system.addRenderer(nebulaRenderer)
+  const vfxRenderer = new GPURenderer(state.scene, THREE)
+  const nebulaSystem = system.addRenderer(vfxRenderer)
+  vfxRenderer.vfxName = `shot_${v4()}`
+  state.vfxList.push(vfxRenderer.vfxName)
 
   const forceMagnitude = 10000
   const forceDirection = directionN.clone().negate().normalize().multiplyScalar(forceMagnitude)
@@ -84,6 +103,8 @@ export const createShotVFX = async (
   let hasAppliedCallbackOnce = false
 
   state.sounds.addAndPlayPositionalSound(entity, 'spellShot', { volume: 0.15 })
+
+  let wasSpellRemoved: boolean = false
 
   eventUuid = state.addEvent(`renderer.update`, (deltaS: number) => {
     nebulaSystem.emitters.forEach((emitter: any) => {
@@ -129,9 +150,13 @@ export const createShotVFX = async (
         }
 
         /* let the impacted spell sit for a while to see where you hit */
+
         setTimeout(() => {
-          state.removeEvent(`renderer.update`, eventUuid)
+          if (wasSpellRemoved) return
+          state.removeEvent('renderer.update', eventUuid)
           nebulaSystem.destroy()
+          destroyRenderer(vfxRenderer)
+          wasSpellRemoved = true
         }, 2000)
         return
       }
